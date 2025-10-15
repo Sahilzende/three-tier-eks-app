@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"/><title>Three-Tier Frontend</title></head>
+  <body>
+    <h1>Three Tier Demo</h1>
+    <div id="content"></div>
+    <script>
+      fetch('/api/hello')
+        .then(r => r.json())
+        .then(j => document.getElementById('content').innerText = j.msg)
+        .catch(e => document.getElementById('content').innerText = 'API error: '+e);
+    </script>
+  </body>
+</html>
