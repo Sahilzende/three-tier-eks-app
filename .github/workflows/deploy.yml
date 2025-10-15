@@ -1,0 +1,40 @@
+name: Build & Deploy 3-Tier App to EKS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t three-tier-app-backend ./backend
+          docker tag three-tier-app-backend:latest ${{ secrets.ECR_REPO_URI }}:backend-latest
+          docker push ${{ secrets.ECR_REPO_URI }}:backend-latest
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t three-tier-app-frontend ./frontend
+          docker tag three-tier-app-frontend:latest ${{ secrets.ECR_REPO_URI }}:frontend-latest
+          docker push ${{ secrets.ECR_REPO_URI }}:frontend-latest
+
+      - name: Deploy to EKS
+        run: |
+          aws eks update-kubeconfig --region us-west-2 --name three-tier-cluster
+          kubectl apply -f k8s/
